@@ -2,6 +2,7 @@ import os
 import pygame
 import sys
 import win32gui
+import shutil
 
 ###################################################
 DEBUG_LEVEL = 0 # 0: Info, 1: Warnings 2: Errors
@@ -110,7 +111,6 @@ def open_window():
     request = ""
     placeholder = PLACEHOLDER_TEXT
 
-    
     debug.log(debug.LV_LOG,
         "Focusing Window")
 
@@ -192,6 +192,29 @@ def main():
         if func == "reg":
             debug.log(debug.LV_LOG,
                 "Running `reg`")
+
+            if len(sys.argv) < 3:
+                debug.log(debug.LV_ERR,
+                    "Path missing")
+                exit(1)
+
+            dir = sys.argv[2]
+            if not os.path.exists(dir):
+                debug.log(debug.LV_ERR,
+                    "Directory path does not exist")
+
+            debug.log(debug.LV_LOG,
+                "Directory path: %s" % os.path.basename(dir))
+            for fn in os.listdir(dir):
+                debug.log(debug.LV_LOG,
+                    "File: %s" % fn)
+                if fn.rsplit('.', 1)[1] == 'lnk':
+                    debug.log(debug.LV_LOG,
+                        "File `%s` is a shortcut" % fn)
+                    shutil.copy(os.path.join(dir, fn), SHORTCUTS_FOLDER)
+                    debug.log(debug.LV_LOG,
+                        "Copied file")
+
 
     else:
         debug.log(debug.LV_LOG,
