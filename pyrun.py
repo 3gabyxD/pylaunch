@@ -1,13 +1,15 @@
 import os
 import pygame
 import sys
+import win32gui
 
 ###################################################
-DEBUG_LEVEL = 2 # 0: Info, 1: Warnings 2: Errors
+DEBUG_LEVEL = 0 # 0: Info, 1: Warnings 2: Errors
 SHORTCUTS_FOLDER = os.path.join(
     os.environ['LOCALAPPDATA'],
     'Pyrun',
 )
+PLACEHOLDER_TEXT = "pyrun"
 ###################################################
 
 class Debugger:
@@ -33,6 +35,11 @@ def get_shortcut_file(name):
     debug.log(debug.LV_LOG,
         "Getting Shortcut: %s" % name)
 
+    if len(name) < 1:
+        debug.log(debug.LV_WARN,
+            "`Name` should not be an empty string")
+        return (None, None)
+
     for filename in os.listdir(SHORTCUTS_FOLDER):
         f = os.path.join(SHORTCUTS_FOLDER, filename)
         matches = filename.lower().find(name.lower(), 0, len(name.lower()))
@@ -53,15 +60,6 @@ def start_shortcut(shortcut_dir):
 def try_lookup_shortcut(name):
     debug = Debugger('Try Lookup Shortcut')
 
-    # Testing
-    """
-    if len(sys.argv) < 2:
-        debug.log(debug.LV_ERR,
-            "Name argument must not be blank")
-        exit(1)
-
-    name = sys.argv[1]
-    """
     if len(name) < 1:
         debug.log(debug.LV_ERR,
             "Name must not be a blank string")
@@ -75,18 +73,51 @@ def try_lookup_shortcut(name):
 
     success = start_shortcut(shortcut_file)
 
+def get_placeholder(request, shortcut_filename=None):
+    if len(request) < 1:
+        return PLACEHOLDER_TEXT
+    if shortcut_filename:
+        return shortcut_filename
+    return ''
+
+def windowEnumerationHandler(hwnd, windows):
+    windows.append((hwnd, win32gui.GetWindowText(hwnd)))
+
+def front(win_name):
+    windows = []
+    win32gui.EnumWindows(windowEnumerationHandler, windows)
+    for i in windows:
+        if i[1] == win_name:
+            win32gui.ShowWindow(i[0],5)
+            win32gui.SetForegroundWindow(i[0])
+            break
+
 def open_window():
     debug = Debugger("Open Window")
+    debug.log(debug.LV_LOG,
+        "Initialize Pygame")
 
     pygame.init()
     pygame.font.init()
 
-    screen = pygame.display.set_mode((500, 500), pygame.NOFRAME)
-    
+    padding = 10
+    font_size = 30
 
-    font = pygame.font.Font('font.ttf', 20)
+    screen = pygame.display.set_mode((600+padding*2, font_size+padding*2), pygame.NOFRAME)
+    pygame.display.set_caption('Pyrun')
+
+    font = pygame.font.Font('font.ttf', font_size)
     request = ""
-    placeholder = "Input text here"
+    placeholder = PLACEHOLDER_TEXT
+
+    
+    debug.log(debug.LV_LOG,
+        "Focusing Window")
+
+    front('Pyrun')
+
+    debug.log(debug.LV_LOG,
+        "Focused Window")
 
     active = True
     while active:
@@ -100,40 +131,39 @@ def open_window():
                     case pygame.K_RETURN:
                         try_lookup_shortcut(request)
                         active = False
+                    case pygame.K_UP | pygame.K_TAB:
+                        debug.log(debug.LV_LOG, "Up Arrow")
+                        (_, shortcut_filename) = get_shortcut_file(request)
+                        if shortcut_filename:
+                            request = shortcut_filename
                     case pygame.K_BACKSPACE:
                         if len(request) > 0:
                             request = request[:-1]
                             debug.log(debug.LV_LOG,
                                 "Request: %s" % request)
                             (_, shortcut_filename) = get_shortcut_file(request)
-                            if len(request) < 1:
-                                placeholder = "Input text here"
-                            elif shortcut_filename:
-                                placeholder = shortcut_filename
-                            else:
-                                placeholder = ''
-
+                            placeholder = get_placeholder(request, shortcut_filename)
                     case _:
                         request += event.unicode
                         debug.log(debug.LV_LOG,
                             "Request: %s" % request)
                         (_, shortcut_filename) = get_shortcut_file(request)
-                        if shortcut_filename:
-                            placeholder = shortcut_filename
-                        elif len(request) < 1:
-                            placeholder = "Input text here"
-                        else:
-                            placeholder = ''
+                        placeholder = get_placeholder(request, shortcut_filename)
 
+        # Rendering
         screen.fill((40, 40, 40))
 
+        placeholdersurface = font.render(placeholder[len(request):], True, (80, 73, 69))
+        color = (235, 219, 178)
+        if len(placeholder) < 1:
+            color = (204, 36, 29)
+        elif placeholder == request:
+            color = (152, 152, 26)
 
-        placeholdersurface = font.render(placeholder, True, (80, 73, 69))
-        textsurface = font.render(request, True, (235, 219, 178))
+        textsurface = font.render('> ' + request, True, color)
 
-        screen.blit(placeholdersurface, (0, 0))
-        screen.blit(textsurface, (0, 0))
-
+        screen.blit(placeholdersurface, (padding + textsurface.get_width(), padding))
+        screen.blit(textsurface, (padding, padding))
 
         pygame.display.update()
 
@@ -157,11 +187,18 @@ def main():
                 "Cannot create shortcuts folder")
             exit(1)
 
-    debug.log(debug.LV_LOG,
-        "Starting pygame window")
-    open_window()
-    debug.log(debug.LV_LOG,
-        "Exit")
+    if len(sys.argv) > 1:
+        func = sys.argv[1]
+        if func == "reg":
+            debug.log(debug.LV_LOG,
+                "Running `reg`")
+
+    else:
+        debug.log(debug.LV_LOG,
+            "Starting pygame window")
+        open_window()
+        debug.log(debug.LV_LOG,
+            "Exit")
 
 if __name__ == '__main__':
     main()
