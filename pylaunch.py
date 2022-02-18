@@ -8,9 +8,9 @@ import shutil
 DEBUG_LEVEL = 0 # 0: Info, 1: Warnings 2: Errors
 SHORTCUTS_FOLDER = os.path.join(
     os.environ['LOCALAPPDATA'],
-    'Pyrun',
+    'Pylaunch',
 )
-PLACEHOLDER_TEXT = "pyrun"
+PLACEHOLDER_TEXT = "pylaunch"
 ###################################################
 
 class bcolors:
@@ -227,7 +227,7 @@ def main():
 
     else:
         debug.log(debug.LV_LOG,
-            "Starting pygame window")
+            "Starting window")
         open_window()
         debug.log(debug.LV_LOG,
             "Exit")

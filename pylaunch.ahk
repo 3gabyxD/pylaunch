@@ -4,5 +4,5 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
 #Enter::
-TempFile=%A_Temp%\pyrun_temp.txt ; Define temp file
-RunWait %comspec% /c "python pyrun.py > %TempFile%",,Hide
+TempFile=%A_Temp%\pylaunch_temp.txt ; Define temp file
+RunWait %comspec% /c "python pylaunch.py > %TempFile%",,Hide
