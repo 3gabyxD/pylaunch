@@ -13,6 +13,17 @@ SHORTCUTS_FOLDER = os.path.join(
 PLACEHOLDER_TEXT = "pyrun"
 ###################################################
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 class Debugger:
     LV_LOG = 0
     LV_WARN = 1
@@ -27,9 +38,9 @@ class Debugger:
                 case 0:
                     print('[INFO] %s' % message)
                 case 1:
-                    print('[WARN] %s' % message)
+                    print('%s[WARN]%s %s' % (bcolors.WARNING, bcolors.ENDC, message))
                 case 2:
-                    print('[ERR] %s' % message)
+                    print('%s[ERR]%s %s' % (bcolors.FAIL, bcolors.ENDC, message))
 
 def get_shortcut_file(name):
     debug = Debugger('Get Shortcut File')
@@ -47,8 +58,6 @@ def get_shortcut_file(name):
         if os.path.isfile(f):
             debug.log(debug.LV_LOG,
                 "Found file: %s" % filename)
-            debug.log(debug.LV_LOG,
-                "Matches: %s" % matches)
             if matches != -1:
                 return f, filename.rsplit('.', 1)[0]
 
